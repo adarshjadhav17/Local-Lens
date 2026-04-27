@@ -6,27 +6,41 @@ import { DiscoverySection } from "@/components/DiscoverySection";
 import { ItemGrid } from "@/components/ItemGrid";
 import { PageHeader } from "@/components/PageHeader";
 import { SnapshotOverview } from "@/components/SnapshotOverview";
-import { getAreaSnapshot, hasMockArea, normalizeZip } from "@/lib/local-area";
+import { useWeather } from "@/hooks/useWeather";
+import {
+  getAreaSnapshot,
+  hasMockArea,
+  incorrectZipMessage,
+  normalizeZip
+} from "@/lib/local-area";
 
 const defaultZip = "60614";
 
 export default function Home() {
   const [zipInput, setZipInput] = useState(defaultZip);
   const [activeZip, setActiveZip] = useState(defaultZip);
+  const [zipValidationError, setZipValidationError] = useState<string | null>(null);
 
   const area = useMemo(() => getAreaSnapshot(activeZip), [activeZip]);
   const isMockFallback = !hasMockArea(activeZip);
+  const { weather, isLoading: isWeatherLoading, error: weatherError } = useWeather(activeZip);
+  const zipLookupError = weatherError === incorrectZipMessage ? weatherError : null;
 
   function handleZipInputChange(value: string) {
     setZipInput(normalizeZip(value));
+    setZipValidationError(null);
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (zipInput.length === 5) {
-      setActiveZip(zipInput);
+    if (zipInput.length !== 5) {
+      setZipValidationError(incorrectZipMessage);
+      return;
     }
+
+    setZipValidationError(null);
+    setActiveZip(zipInput);
   }
 
   return (
@@ -34,11 +48,18 @@ export default function Home() {
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8">
         <PageHeader
           zipInput={zipInput}
+          validationError={zipValidationError ?? zipLookupError}
           onZipInputChange={handleZipInputChange}
           onSubmit={handleSubmit}
         />
 
-        <SnapshotOverview area={area} isMockFallback={isMockFallback} />
+        <SnapshotOverview
+          area={area}
+          isMockFallback={isMockFallback}
+          liveWeather={weather}
+          isWeatherLoading={isWeatherLoading}
+          weatherError={weatherError}
+        />
 
         <div className="grid gap-8 lg:grid-cols-3">
           <DiscoverySection title="Nearby Events" eyebrow="Today and soon">

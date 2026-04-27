@@ -1,5 +1,7 @@
 import { fallbackArea, mockAreas } from "@/data/mock-areas";
 
+export const incorrectZipMessage = "Incorrect ZIP code.";
+
 export function normalizeZip(value: string) {
   return value.replace(/\D/g, "").slice(0, 5);
 }

@@ -2,6 +2,7 @@ import { ZipSearchForm } from "@/components/ZipSearchForm";
 
 export function PageHeader({
   zipInput,
+  validationError,
   onZipInputChange,
   onSubmit
 }: React.ComponentProps<typeof ZipSearchForm>) {
@@ -20,6 +21,7 @@ export function PageHeader({
 
       <ZipSearchForm
         zipInput={zipInput}
+        validationError={validationError}
         onZipInputChange={onZipInputChange}
         onSubmit={onSubmit}
       />
