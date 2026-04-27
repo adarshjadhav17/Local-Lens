@@ -74,10 +74,13 @@ export function TrafficCard({
                 <div key={route.label} className="rounded-md border border-ink/10 px-3 py-2">
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-sm font-bold text-ink">{route.label}</span>
-                    <span className="text-sm font-bold text-sunrise">+{route.delayMinutes} min</span>
+                    <span className="text-sm font-bold text-sunrise">
+                      {route.travelMinutes} min
+                    </span>
                   </div>
-                  <p className="mt-1 text-xs font-semibold text-ink/50">
-                    {route.destination} · {route.distanceMiles} mi
+                  <p className="mt-1 text-xs font-semibold leading-5 text-ink/50">
+                    {route.destination} · {route.distanceMiles} mi · +{route.delayMinutes} min ·{" "}
+                    {route.source}
                   </p>
                 </div>
               ))}

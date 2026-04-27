@@ -10,8 +10,10 @@ export type TrafficRouteEstimate = {
   label: string;
   destination: string;
   distanceMiles: number;
+  travelMinutes: number;
   delayMinutes: number;
   level: TrafficLevel;
+  source: "Estimated" | "Live";
 };
 
 export type TrafficSnapshot = {

@@ -1,5 +1,5 @@
 import { getDistanceMiles } from "@/lib/geo";
-import type { TrafficLevel, TrafficSnapshot } from "@/types/traffic";
+import type { TrafficLevel, TrafficRouteEstimate, TrafficSnapshot } from "@/types/traffic";
 import type { ZipLocation } from "@/types/zip-location";
 
 type MetroArea = {
@@ -25,6 +25,17 @@ type TomTomFlowResponse = {
     freeFlowTravelTime?: number;
     roadClosure?: boolean;
   };
+};
+
+type TomTomRouteResponse = {
+  routes?: Array<{
+    summary?: {
+      lengthInMeters?: number;
+      travelTimeInSeconds?: number;
+      trafficDelayInSeconds?: number;
+      noTrafficTravelTimeInSeconds?: number;
+    };
+  }>;
 };
 
 const metroAreas: MetroArea[] = [
@@ -325,6 +336,8 @@ async function getLiveTrafficSnapshot(
     ? "Severe"
     : getLevelFromSpeedRatio(flow.currentSpeed / Math.max(flow.freeFlowSpeed, 1), delayMinutes);
 
+  const routeEstimates = metro ? await getLiveRouteEstimates(location, metro, apiKey, level) : [];
+
   return {
     level,
     summary: flow.roadClosure
@@ -339,8 +352,79 @@ async function getLiveTrafficSnapshot(
         level
       }
     ],
-    routeEstimates: metro ? getRouteEstimates(location, metro, level) : [],
+    routeEstimates,
     source: "Live"
+  };
+}
+
+async function getLiveRouteEstimates(
+  location: ZipLocation,
+  metro: MetroArea,
+  apiKey: string,
+  fallbackLevel: TrafficLevel
+): Promise<TrafficRouteEstimate[]> {
+  const routes = await Promise.all([
+    getTomTomRouteEstimate(location, metro.downtown, "To downtown", apiKey, fallbackLevel),
+    getTomTomRouteEstimate(location, metro.airport, "To airport", apiKey, fallbackLevel)
+  ]);
+  const liveRoutes = routes.filter((route): route is TrafficRouteEstimate => route !== null);
+
+  if (liveRoutes.length === routes.length) {
+    return liveRoutes;
+  }
+
+  return getRouteEstimates(location, metro, fallbackLevel);
+}
+
+async function getTomTomRouteEstimate(
+  origin: ZipLocation,
+  destination: MetroArea["downtown"],
+  label: string,
+  apiKey: string,
+  fallbackLevel: TrafficLevel
+): Promise<TrafficRouteEstimate | null> {
+  const params = new URLSearchParams({
+    key: apiKey,
+    traffic: "true",
+    routeRepresentation: "summaryOnly",
+    computeTravelTimeFor: "all",
+    travelMode: "car"
+  });
+  const points = `${origin.latitude},${origin.longitude}:${destination.latitude},${destination.longitude}`;
+  const response = await fetch(
+    `https://api.tomtom.com/routing/1/calculateRoute/${points}/json?${params}`,
+    { next: { revalidate: 2 * 60 } }
+  );
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const data = (await response.json()) as TomTomRouteResponse;
+  const summary = data.routes?.[0]?.summary;
+
+  if (
+    !summary ||
+    typeof summary.lengthInMeters !== "number" ||
+    typeof summary.travelTimeInSeconds !== "number"
+  ) {
+    return null;
+  }
+
+  const delaySeconds =
+    typeof summary.trafficDelayInSeconds === "number"
+      ? summary.trafficDelayInSeconds
+      : summary.travelTimeInSeconds - (summary.noTrafficTravelTimeInSeconds ?? summary.travelTimeInSeconds);
+  const delayMinutes = Math.max(0, Math.round(delaySeconds / 60));
+
+  return {
+    label,
+    destination: destination.name,
+    distanceMiles: Math.round(summary.lengthInMeters / 1609.344),
+    travelMinutes: Math.max(1, Math.round(summary.travelTimeInSeconds / 60)),
+    delayMinutes,
+    level: getLevelFromDelay(delayMinutes) === "Low" ? fallbackLevel : getLevelFromDelay(delayMinutes),
+    source: "Live" as const
   };
 }
 
@@ -394,15 +478,19 @@ function getRouteEstimates(location: ZipLocation, metro: MetroArea, level: Traff
       label: "To downtown",
       destination: metro.downtown.name,
       distanceMiles: Math.round(downtownDistance),
+      travelMinutes: getRouteTravelMinutes(downtownDistance, level),
       delayMinutes: getRouteDelay(downtownDistance, level),
-      level
+      level,
+      source: "Estimated" as const
     },
     {
       label: "To airport",
       destination: metro.airport.name,
       distanceMiles: Math.round(airportDistance),
+      travelMinutes: getRouteTravelMinutes(airportDistance, level),
       delayMinutes: getRouteDelay(airportDistance, level),
-      level
+      level,
+      source: "Estimated" as const
     }
   ];
 }
@@ -420,6 +508,10 @@ function getBaseDelay(level: TrafficLevel) {
 
 function getRouteDelay(distanceMiles: number, level: TrafficLevel) {
   return Math.round(getBaseDelay(level) + distanceMiles * getDelayMultiplier(level));
+}
+
+function getRouteTravelMinutes(distanceMiles: number, level: TrafficLevel) {
+  return Math.max(1, Math.round(distanceMiles * 2.2 + getRouteDelay(distanceMiles, level)));
 }
 
 function getDelayMultiplier(level: TrafficLevel) {
