@@ -6,13 +6,8 @@ import { DiscoverySection } from "@/components/DiscoverySection";
 import { ItemGrid } from "@/components/ItemGrid";
 import { PageHeader } from "@/components/PageHeader";
 import { SnapshotOverview } from "@/components/SnapshotOverview";
-import { useWeather } from "@/hooks/useWeather";
-import {
-  getAreaSnapshot,
-  hasMockArea,
-  incorrectZipMessage,
-  normalizeZip
-} from "@/lib/local-area";
+import { useLocalSnapshot } from "@/hooks/useLocalSnapshot";
+import { getAreaSnapshot, incorrectZipMessage, normalizeZip } from "@/lib/local-area";
 
 const defaultZip = "60614";
 
@@ -21,10 +16,11 @@ export default function Home() {
   const [activeZip, setActiveZip] = useState(defaultZip);
   const [zipValidationError, setZipValidationError] = useState<string | null>(null);
 
-  const area = useMemo(() => getAreaSnapshot(activeZip), [activeZip]);
-  const isMockFallback = !hasMockArea(activeZip);
-  const { weather, isLoading: isWeatherLoading, error: weatherError } = useWeather(activeZip);
-  const zipLookupError = weatherError === incorrectZipMessage ? weatherError : null;
+  const fallbackArea = useMemo(() => getAreaSnapshot(activeZip), [activeZip]);
+  const { snapshot, isLoading, error: snapshotError } = useLocalSnapshot(activeZip);
+  const area = snapshot?.area ?? fallbackArea;
+  const isMockFallback = snapshot?.isMockFallback ?? true;
+  const zipLookupError = snapshotError === incorrectZipMessage ? snapshotError : null;
 
   function handleZipInputChange(value: string) {
     setZipInput(normalizeZip(value));
@@ -56,9 +52,9 @@ export default function Home() {
         <SnapshotOverview
           area={area}
           isMockFallback={isMockFallback}
-          liveWeather={weather}
-          isWeatherLoading={isWeatherLoading}
-          weatherError={weatherError}
+          liveWeather={snapshot?.weather ?? null}
+          isWeatherLoading={isLoading}
+          snapshotError={snapshotError}
         />
 
         <div className="grid gap-8 lg:grid-cols-3">

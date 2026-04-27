@@ -4,11 +4,3 @@ export type WeatherSummary = {
   detail: string;
   location: string;
 };
-
-export type WeatherApiResponse =
-  | {
-      weather: WeatherSummary;
-    }
-  | {
-      error: string;
-    };

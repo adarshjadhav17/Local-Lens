@@ -9,13 +9,13 @@ export function SnapshotOverview({
   isMockFallback,
   liveWeather,
   isWeatherLoading,
-  weatherError
+  snapshotError
 }: {
   area: AreaSnapshot;
   isMockFallback: boolean;
   liveWeather: WeatherSummary | null;
   isWeatherLoading: boolean;
-  weatherError: string | null;
+  snapshotError: string | null;
 }) {
   return (
     <section className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
@@ -26,7 +26,7 @@ export function SnapshotOverview({
           fallbackWeather={area.weather}
           liveWeather={liveWeather}
           isLoading={isWeatherLoading}
-          error={weatherError}
+          error={snapshotError}
         />
         <TrafficCard traffic={area.traffic} />
       </div>
