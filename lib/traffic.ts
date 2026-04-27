@@ -38,6 +38,24 @@ type TomTomRouteResponse = {
   }>;
 };
 
+type FlowSample = {
+  point: {
+    latitude: number;
+    longitude: number;
+  };
+  name: string;
+};
+
+type LiveHighwayDelay = {
+  name: string;
+  delayMinutes: number;
+  level: TrafficLevel;
+  source: "Live";
+  currentSpeed: number;
+  freeFlowSpeed: number;
+  roadClosure: boolean;
+};
+
 const metroAreas: MetroArea[] = [
   {
     name: "Chicago",
@@ -286,6 +304,7 @@ export async function getTrafficSnapshot(location: ZipLocation, now = new Date()
     summary: getTrafficSummary(level, metro?.name),
     highwayDelays,
     routeEstimates,
+    notice: "Live traffic is unavailable for this ZIP right now, so these are time-of-day estimates.",
     source: "Estimated"
   };
 }
@@ -300,9 +319,76 @@ async function getLiveTrafficSnapshot(
     return null;
   }
 
+  const liveHighwayDelays = await getLiveHighwayDelays(location, metro, apiKey);
+
+  if (liveHighwayDelays.length === 0) {
+    return null;
+  }
+
+  const level = getWorstLevel(liveHighwayDelays.map((delay) => delay.level));
+  const slowestDelay = liveHighwayDelays.reduce((slowest, delay) =>
+    delay.delayMinutes > slowest.delayMinutes ? delay : slowest
+  );
+  const routeEstimates = metro ? await getLiveRouteEstimates(location, metro, apiKey, level) : [];
+
+  return {
+    level,
+    summary: slowestDelay.roadClosure
+      ? "A nearby road segment is reported closed."
+      : `The slowest nearby sampled road is moving at ${Math.round(
+          slowestDelay.currentSpeed
+        )} mph versus ${Math.round(
+          slowestDelay.freeFlowSpeed
+        )} mph in free-flow conditions.`,
+    highwayDelays: liveHighwayDelays.map(toHighwayDelay),
+    routeEstimates,
+    notice:
+      routeEstimates.length > 0
+        ? null
+        : "Live nearby road data is available, but route estimates are unavailable for this ZIP.",
+    source: "Live"
+  };
+}
+
+async function getLiveHighwayDelays(
+  location: ZipLocation,
+  metro: MetroArea | undefined,
+  apiKey: string
+): Promise<LiveHighwayDelay[]> {
+  const samples = getFlowSamples(location, metro);
+  const delays = await Promise.all(
+    samples.map(async (sample) => getLiveHighwayDelay(sample, apiKey))
+  );
+
+  return delays.filter((delay): delay is LiveHighwayDelay => delay !== null).slice(0, 3);
+}
+
+function getFlowSamples(location: ZipLocation, metro: MetroArea | undefined): FlowSample[] {
+  if (!metro) {
+    return [
+      {
+        point: location,
+        name: "Nearby major road"
+      }
+    ];
+  }
+
+  return metro.highways.slice(0, 3).map((highway, index) => ({
+    point: {
+      latitude: location.latitude + (index - 1) * 0.012,
+      longitude: location.longitude + (index - 1) * 0.012
+    },
+    name: highway
+  }));
+}
+
+async function getLiveHighwayDelay(
+  sample: FlowSample,
+  apiKey: string
+): Promise<LiveHighwayDelay | null> {
   const params = new URLSearchParams({
     key: apiKey,
-    point: `${location.latitude},${location.longitude}`,
+    point: `${sample.point.latitude},${sample.point.longitude}`,
     unit: "mph"
   });
 
@@ -332,28 +418,28 @@ async function getLiveTrafficSnapshot(
     0,
     Math.round((flow.currentTravelTime - flow.freeFlowTravelTime) / 60)
   );
-  const level = flow.roadClosure
+  const roadClosure = Boolean(flow.roadClosure);
+  const level = roadClosure
     ? "Severe"
     : getLevelFromSpeedRatio(flow.currentSpeed / Math.max(flow.freeFlowSpeed, 1), delayMinutes);
 
-  const routeEstimates = metro ? await getLiveRouteEstimates(location, metro, apiKey, level) : [];
-
   return {
+    name: sample.name,
+    delayMinutes,
     level,
-    summary: flow.roadClosure
-      ? "A nearby road segment is reported closed."
-      : `Nearby traffic is moving at ${Math.round(flow.currentSpeed)} mph versus ${Math.round(
-          flow.freeFlowSpeed
-        )} mph in free-flow conditions.`,
-    highwayDelays: [
-      {
-        name: metro?.highways[0] ?? "Nearby major road",
-        delayMinutes,
-        level
-      }
-    ],
-    routeEstimates,
-    source: "Live"
+    source: "Live",
+    currentSpeed: flow.currentSpeed,
+    freeFlowSpeed: flow.freeFlowSpeed,
+    roadClosure
+  };
+}
+
+function toHighwayDelay(delay: LiveHighwayDelay) {
+  return {
+    name: delay.name,
+    delayMinutes: delay.delayMinutes,
+    level: delay.level,
+    source: delay.source
   };
 }
 
@@ -464,7 +550,8 @@ function getHighwayDelays(highways: string[], level: TrafficLevel) {
     return {
       name,
       delayMinutes,
-      level: getLevelFromDelay(delayMinutes)
+      level: getLevelFromDelay(delayMinutes),
+      source: "Estimated" as const
     };
   });
 }
@@ -555,6 +642,17 @@ function getLevelFromSpeedRatio(speedRatio: number, delayMinutes: number): Traff
   }
 
   return "Low";
+}
+
+function getWorstLevel(levels: TrafficLevel[]): TrafficLevel {
+  const severity: Record<TrafficLevel, number> = {
+    Low: 0,
+    Medium: 1,
+    High: 2,
+    Severe: 3
+  };
+
+  return levels.reduce((worst, level) => (severity[level] > severity[worst] ? level : worst), "Low");
 }
 
 function getTrafficSummary(level: TrafficLevel, metroName?: string) {

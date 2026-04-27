@@ -49,6 +49,11 @@ export function TrafficCard({
       </div>
 
       <p className="mt-3 text-sm leading-6 text-ink/70">{trafficSnapshot.summary}</p>
+      {trafficSnapshot.notice ? (
+        <p className="mt-2 rounded-md bg-paper/70 px-3 py-2 text-xs font-semibold leading-5 text-ink/60">
+          {trafficSnapshot.notice}
+        </p>
+      ) : null}
 
       <div className="mt-4 space-y-3">
         <div>
@@ -60,7 +65,10 @@ export function TrafficCard({
                 className="flex items-center justify-between gap-3 rounded-md bg-paper/70 px-3 py-2"
               >
                 <span className="text-sm font-bold text-ink">{highway.name}</span>
-                <span className="text-sm font-bold text-sunrise">+{highway.delayMinutes} min</span>
+                <span className="text-right text-sm font-bold text-sunrise">
+                  +{highway.delayMinutes} min
+                  <span className="block text-xs font-semibold text-ink/45">{highway.source}</span>
+                </span>
               </div>
             ))}
           </div>

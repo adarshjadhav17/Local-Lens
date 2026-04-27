@@ -4,6 +4,7 @@ export type HighwayDelay = {
   name: string;
   delayMinutes: number;
   level: TrafficLevel;
+  source: "Estimated" | "Live";
 };
 
 export type TrafficRouteEstimate = {
@@ -21,5 +22,6 @@ export type TrafficSnapshot = {
   summary: string;
   highwayDelays: HighwayDelay[];
   routeEstimates: TrafficRouteEstimate[];
+  notice: string | null;
   source: "Estimated" | "Live";
 };
