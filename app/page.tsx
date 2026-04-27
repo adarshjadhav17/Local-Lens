@@ -53,6 +53,7 @@ export default function Home() {
           area={area}
           isMockFallback={isMockFallback}
           liveWeather={snapshot?.weather ?? null}
+          trafficSnapshot={snapshot?.traffic ?? null}
           isWeatherLoading={isLoading}
           snapshotError={snapshotError}
         />

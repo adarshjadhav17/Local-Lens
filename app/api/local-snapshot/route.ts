@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAreaSnapshot, hasMockArea, incorrectZipMessage, normalizeZip } from "@/lib/local-area";
+import { getTrafficSnapshot } from "@/lib/traffic";
 import { getCurrentWeather } from "@/lib/weather";
 import { getZipLocation } from "@/lib/zip-location";
 import type { AreaSnapshot } from "@/types/local-area";
@@ -29,11 +30,13 @@ export async function GET(request: Request) {
     const isMockFallback = !hasMockArea(zip);
     const location = await getZipLocation(zip);
     const weather = await getCurrentWeather(location);
+    const traffic = await getTrafficSnapshot(location);
 
     return NextResponse.json({
       snapshot: {
         area: getResolvedArea(area, location, isMockFallback),
         weather,
+        traffic,
         isMockFallback
       }
     });
