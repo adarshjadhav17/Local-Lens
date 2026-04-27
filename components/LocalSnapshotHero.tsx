@@ -19,7 +19,7 @@ export function LocalSnapshotHero({
         </div>
         {isMockFallback ? (
           <span className="rounded-full bg-white/12 px-4 py-2 text-sm font-bold text-white">
-            Sample mock data
+            Sample sections
           </span>
         ) : null}
       </div>
