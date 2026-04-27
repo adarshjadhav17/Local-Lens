@@ -1,0 +1,14 @@
+import type { Weather } from "@/types/local-area";
+
+export function WeatherCard({ weather }: { weather: Weather }) {
+  return (
+    <div className="rounded-lg border border-ink/10 bg-white p-5 shadow-sm">
+      <p className="text-sm font-bold text-moss">Weather</p>
+      <div className="mt-3 flex items-baseline gap-3">
+        <span className="text-4xl font-black text-ink">{weather.temp}</span>
+        <span className="font-bold text-tide">{weather.condition}</span>
+      </div>
+      <p className="mt-3 text-sm leading-6 text-ink/70">{weather.detail}</p>
+    </div>
+  );
+}
