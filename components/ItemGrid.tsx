@@ -4,8 +4,8 @@ import type { LocalItem } from "@/types/local-area";
 export function ItemGrid({ items }: { items: LocalItem[] }) {
   return (
     <div className="grid gap-4">
-      {items.map((item) => (
-        <ItemCard key={item.title} item={item} />
+      {items.map((item, index) => (
+        <ItemCard key={`${item.title}-${item.description}-${index}`} item={item} />
       ))}
     </div>
   );

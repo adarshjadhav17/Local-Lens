@@ -36,10 +36,34 @@ export const mockAreas: Record<string, AreaSnapshot> = {
         tag: "Dinner"
       },
       {
-        title: "Canal Coffee Bar",
+        title: "Clark Street Smash",
+        meta: "Fast food outlet",
+        description: "Counter-service burgers, fries, and late-night shakes near the park.",
+        tag: "Fast food"
+      },
+      {
+        title: "Halsted Noodle House",
+        meta: "Opened last month",
+        description: "Casual ramen bowls, rice plates, and quick weekday lunch service.",
+        tag: "Lunch"
+      },
+      {
+        title: "Fullerton Taco Stand",
+        meta: "New this month",
+        description: "Street-style tacos, tortas, and aguas frescas from a compact walk-up window.",
+        tag: "Quick bite"
+      },
+      {
+        title: "Parkside Pizzeria",
+        meta: "Recently opened",
+        description: "Thin-crust slices, whole pies, and a short list of salads.",
+        tag: "Pizza"
+      },
+      {
+        title: "Armitage Grill",
         meta: "Soft opening",
-        description: "Espresso, cardamom buns, and window seats for weekday remote work.",
-        tag: "Cafe"
+        description: "Neighborhood plates, sandwiches, and weekday dinner specials.",
+        tag: "Dinner"
       }
     ],
     deals: [
@@ -92,10 +116,34 @@ export const mockAreas: Record<string, AreaSnapshot> = {
         tag: "Lunch"
       },
       {
-        title: "Little Tempo",
-        meta: "New cafe",
-        description: "Single-origin pour-overs and tiny savory tarts near 8th Avenue.",
-        tag: "Coffee"
+        title: "Ninth Ave Burger",
+        meta: "Fast food outlet",
+        description: "Smash burgers, chicken sandwiches, and fries built for quick takeout.",
+        tag: "Fast food"
+      },
+      {
+        title: "Chelsea Dumpling Co.",
+        meta: "Recently opened",
+        description: "Hand-folded dumplings, noodle soups, and lunch combos near the galleries.",
+        tag: "Lunch"
+      },
+      {
+        title: "Hudson Slice Shop",
+        meta: "New this month",
+        description: "NY-style slices, garlic knots, and quick counter service.",
+        tag: "Pizza"
+      },
+      {
+        title: "Little Tempo Grill",
+        meta: "Soft opening",
+        description: "Mediterranean plates, wraps, and late-afternoon dinner boxes.",
+        tag: "Dinner"
+      },
+      {
+        title: "Flatiron Taco Stop",
+        meta: "Opened 3 weeks ago",
+        description: "Fast casual tacos, bowls, and chips with rotating salsas.",
+        tag: "Quick bite"
       }
     ],
     deals: [
@@ -148,10 +196,34 @@ export const mockAreas: Record<string, AreaSnapshot> = {
         tag: "Breakfast"
       },
       {
-        title: "Fig Leaf Cafe",
+        title: "South First Chicken",
+        meta: "Fast food outlet",
+        description: "Crispy chicken sandwiches, tenders, and drive-up dinner boxes.",
+        tag: "Fast food"
+      },
+      {
+        title: "Barton Bowl House",
         meta: "Opened 10 days ago",
-        description: "Mediterranean coffee, flatbreads, and late-night desserts.",
-        tag: "Cafe"
+        description: "Rice bowls, grilled vegetables, and spicy sauces for a quick meal.",
+        tag: "Lunch"
+      },
+      {
+        title: "Congress Pizza",
+        meta: "Recently opened",
+        description: "Whole pies, slices, and salads with fast counter pickup.",
+        tag: "Pizza"
+      },
+      {
+        title: "Creekside Burger",
+        meta: "New this month",
+        description: "Burgers, fries, and soft serve close to the trail.",
+        tag: "Fast food"
+      },
+      {
+        title: "Oltorf Grill",
+        meta: "Soft opening",
+        description: "Casual dinner plates, tacos, and a small patio for warm evenings.",
+        tag: "Dinner"
       }
     ],
     deals: [
@@ -200,16 +272,40 @@ export const fallbackArea: AreaSnapshot = {
   ],
   restaurants: [
     {
-      title: "Cornerstone Cafe",
+      title: "Cornerstone Grill",
       meta: "Recently opened",
-      description: "Breakfast sandwiches, espresso, and fresh baked goods.",
-      tag: "Cafe"
+      description: "Breakfast sandwiches, burgers, and quick counter-service plates.",
+      tag: "Restaurant"
     },
     {
       title: "Northline Noodles",
       meta: "New this month",
       description: "Fast casual bowls with a short seasonal menu.",
       tag: "Dinner"
+    },
+    {
+      title: "Main Street Burger",
+      meta: "Fast food outlet",
+      description: "Burgers, fries, and shakes with quick pickup service.",
+      tag: "Fast food"
+    },
+    {
+      title: "Market Taco Stop",
+      meta: "Opened 2 weeks ago",
+      description: "Tacos, bowls, and chips with house salsas.",
+      tag: "Quick bite"
+    },
+    {
+      title: "Central Pizzeria",
+      meta: "Recently opened",
+      description: "Slices, whole pies, and simple salads for lunch or dinner.",
+      tag: "Pizza"
+    },
+    {
+      title: "Station Chicken",
+      meta: "Fast food outlet",
+      description: "Chicken sandwiches, tenders, and family meal boxes.",
+      tag: "Fast food"
     }
   ],
   deals: [

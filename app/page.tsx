@@ -1,20 +1,50 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { DiscoverySection } from "@/components/DiscoverySection";
 import { ItemGrid } from "@/components/ItemGrid";
 import { PageHeader } from "@/components/PageHeader";
+import { ShowMoreItemGrid } from "@/components/ShowMoreItemGrid";
 import { SnapshotOverview } from "@/components/SnapshotOverview";
 import { useLocalSnapshot } from "@/hooks/useLocalSnapshot";
 import { getAreaSnapshot, incorrectZipMessage, normalizeZip } from "@/lib/local-area";
 
 const defaultZip = "60614";
+const storedZipKey = "nearcast:lastZip";
+const storedZipChangeEvent = "nearcast:lastZipChange";
+
+function getStoredZipSnapshot() {
+  const storedZip = normalizeZip(window.localStorage.getItem(storedZipKey) ?? "");
+
+  return storedZip.length === 5 ? storedZip : defaultZip;
+}
+
+function getServerZipSnapshot() {
+  return defaultZip;
+}
+
+function subscribeToStoredZip(onStoreChange: () => void) {
+  window.addEventListener("storage", onStoreChange);
+  window.addEventListener(storedZipChangeEvent, onStoreChange);
+
+  return () => {
+    window.removeEventListener("storage", onStoreChange);
+    window.removeEventListener(storedZipChangeEvent, onStoreChange);
+  };
+}
 
 export default function Home() {
-  const [zipInput, setZipInput] = useState(defaultZip);
-  const [activeZip, setActiveZip] = useState(defaultZip);
+  const storedZip = useSyncExternalStore(
+    subscribeToStoredZip,
+    getStoredZipSnapshot,
+    getServerZipSnapshot
+  );
+  const [zipDraft, setZipDraft] = useState<string | null>(null);
+  const [submittedZip, setSubmittedZip] = useState<string | null>(null);
   const [zipValidationError, setZipValidationError] = useState<string | null>(null);
+  const activeZip = submittedZip ?? storedZip;
+  const zipInput = zipDraft ?? submittedZip ?? storedZip;
 
   const fallbackArea = useMemo(() => getAreaSnapshot(activeZip), [activeZip]);
   const { snapshot, isLoading, error: snapshotError } = useLocalSnapshot(activeZip);
@@ -23,7 +53,7 @@ export default function Home() {
   const zipLookupError = snapshotError === incorrectZipMessage ? snapshotError : null;
 
   function handleZipInputChange(value: string) {
-    setZipInput(normalizeZip(value));
+    setZipDraft(normalizeZip(value));
     setZipValidationError(null);
   }
 
@@ -36,7 +66,10 @@ export default function Home() {
     }
 
     setZipValidationError(null);
-    setActiveZip(zipInput);
+    setZipDraft(null);
+    setSubmittedZip(zipInput);
+    window.localStorage.setItem(storedZipKey, zipInput);
+    window.dispatchEvent(new Event(storedZipChangeEvent));
   }
 
   return (
@@ -63,8 +96,8 @@ export default function Home() {
             <ItemGrid items={area.events} />
           </DiscoverySection>
 
-          <DiscoverySection title="New Restaurants & Cafes" eyebrow="Fresh openings">
-            <ItemGrid items={area.restaurants} />
+          <DiscoverySection title="Restaurants & Fast Food" eyebrow="Within 10 miles">
+            <ShowMoreItemGrid key={activeZip} items={area.restaurants} />
           </DiscoverySection>
 
           <DiscoverySection title="Local Deals" eyebrow="Nearby offers">

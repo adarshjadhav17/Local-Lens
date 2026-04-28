@@ -17,6 +17,9 @@ type GooglePlacesResponse = {
   places?: GooglePlace[];
 };
 
+const TEN_MILES_IN_METERS = 16093.44;
+const MAX_NEARBY_RESULTS = 20;
+
 export async function getNearbyRestaurants(location: ZipLocation): Promise<LocalItem[] | null> {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
 
@@ -33,8 +36,8 @@ export async function getNearbyRestaurants(location: ZipLocation): Promise<Local
         "places.displayName,places.formattedAddress,places.primaryTypeDisplayName,places.rating,places.businessStatus"
     },
     body: JSON.stringify({
-      includedTypes: ["restaurant", "cafe"],
-      maxResultCount: 6,
+      includedPrimaryTypes: ["restaurant", "fast_food_restaurant"],
+      maxResultCount: MAX_NEARBY_RESULTS,
       rankPreference: "POPULARITY",
       locationRestriction: {
         circle: {
@@ -42,7 +45,7 @@ export async function getNearbyRestaurants(location: ZipLocation): Promise<Local
             latitude: location.latitude,
             longitude: location.longitude
           },
-          radius: 5000
+          radius: TEN_MILES_IN_METERS
         }
       }
     }),
@@ -60,12 +63,12 @@ export async function getNearbyRestaurants(location: ZipLocation): Promise<Local
     return null;
   }
 
-  return places.slice(0, 4).map(toLocalItem);
+  return places.map(toLocalItem);
 }
 
 function toLocalItem(place: GooglePlace): LocalItem {
   const title = place.displayName?.text ?? "Nearby place";
-  const category = place.primaryTypeDisplayName?.text ?? "Restaurant or cafe";
+  const category = place.primaryTypeDisplayName?.text ?? "Restaurant or fast food";
   const rating = typeof place.rating === "number" ? `${place.rating.toFixed(1)} stars` : "Rating unavailable";
   const status = place.businessStatus === "OPERATIONAL" ? "Open business" : "Status unavailable";
 
