@@ -3,7 +3,9 @@ import { ZipSearchForm } from "@/components/ZipSearchForm";
 export function PageHeader({
   zipInput,
   validationError,
+  isLocating,
   onZipInputChange,
+  onUseCurrentLocation,
   onSubmit
 }: React.ComponentProps<typeof ZipSearchForm>) {
   return (
@@ -22,7 +24,9 @@ export function PageHeader({
       <ZipSearchForm
         zipInput={zipInput}
         validationError={validationError}
+        isLocating={isLocating}
         onZipInputChange={onZipInputChange}
+        onUseCurrentLocation={onUseCurrentLocation}
         onSubmit={onSubmit}
       />
     </header>

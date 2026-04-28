@@ -3,12 +3,16 @@ import type { FormEvent } from "react";
 export function ZipSearchForm({
   zipInput,
   validationError,
+  isLocating,
   onZipInputChange,
+  onUseCurrentLocation,
   onSubmit
 }: {
   zipInput: string;
   validationError: string | null;
+  isLocating: boolean;
   onZipInputChange: (value: string) => void;
+  onUseCurrentLocation: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
   return (
@@ -39,6 +43,14 @@ export function ZipSearchForm({
           Search
         </button>
       </div>
+      <button
+        type="button"
+        className="mt-3 min-h-11 w-full rounded-md border border-tide/30 bg-white px-4 text-sm font-bold text-tide transition hover:border-tide hover:bg-tide/5 focus:outline-none focus:ring-4 focus:ring-tide/15 disabled:cursor-not-allowed disabled:opacity-60"
+        disabled={isLocating}
+        onClick={onUseCurrentLocation}
+      >
+        {isLocating ? "Finding your ZIP..." : "Use my location"}
+      </button>
       {validationError ? (
         <p id="zip-error" className="mt-2 text-sm font-bold text-sunrise">
           {validationError}

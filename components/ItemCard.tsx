@@ -1,6 +1,13 @@
+"use client";
+
 import type { LocalItem } from "@/types/local-area";
+import { recordItemInterest } from "@/lib/interests";
 
 export function ItemCard({ item }: { item: LocalItem }) {
+  function handleItemClick() {
+    recordItemInterest(item);
+  }
+
   return (
     <article className="rounded-lg border border-ink/10 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-soft">
       <div className="flex items-start justify-between gap-3">
@@ -17,6 +24,7 @@ export function ItemCard({ item }: { item: LocalItem }) {
         <a
           className="mt-3 inline-flex text-sm font-bold text-tide transition hover:text-ink focus:outline-none focus:ring-2 focus:ring-tide focus:ring-offset-2"
           href={item.url}
+          onClick={handleItemClick}
           rel="noreferrer"
           target="_blank"
         >

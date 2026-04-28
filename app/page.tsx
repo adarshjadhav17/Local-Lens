@@ -7,7 +7,9 @@ import { ItemGrid } from "@/components/ItemGrid";
 import { PageHeader } from "@/components/PageHeader";
 import { ShowMoreItemGrid } from "@/components/ShowMoreItemGrid";
 import { SnapshotOverview } from "@/components/SnapshotOverview";
+import { useInterestProfile } from "@/hooks/useInterestProfile";
 import { useLocalSnapshot } from "@/hooks/useLocalSnapshot";
+import { rankItemsByInterests } from "@/lib/interests";
 import { getAreaSnapshot, incorrectZipMessage, normalizeZip } from "@/lib/local-area";
 
 const defaultZip = "60614";
@@ -43,6 +45,9 @@ export default function Home() {
   const [zipDraft, setZipDraft] = useState<string | null>(null);
   const [submittedZip, setSubmittedZip] = useState<string | null>(null);
   const [zipValidationError, setZipValidationError] = useState<string | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+  const interestProfile = useInterestProfile();
   const activeZip = submittedZip ?? storedZip;
   const zipInput = zipDraft ?? submittedZip ?? storedZip;
 
@@ -51,10 +56,20 @@ export default function Home() {
   const area = snapshot?.area ?? fallbackArea;
   const isMockFallback = snapshot?.isMockFallback ?? true;
   const zipLookupError = snapshotError === incorrectZipMessage ? snapshotError : null;
+  const validationError = zipValidationError ?? locationError ?? zipLookupError;
+  const rankedEvents = useMemo(
+    () => rankItemsByInterests(area.events, interestProfile),
+    [area.events, interestProfile]
+  );
+  const rankedRestaurants = useMemo(
+    () => rankItemsByInterests(area.restaurants, interestProfile),
+    [area.restaurants, interestProfile]
+  );
 
   function handleZipInputChange(value: string) {
     setZipDraft(normalizeZip(value));
     setZipValidationError(null);
+    setLocationError(null);
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -66,9 +81,49 @@ export default function Home() {
     }
 
     setZipValidationError(null);
+    setLocationError(null);
     setZipDraft(null);
-    setSubmittedZip(zipInput);
-    window.localStorage.setItem(storedZipKey, zipInput);
+    saveZip(zipInput);
+  }
+
+  async function handleUseCurrentLocation() {
+    setZipValidationError(null);
+    setLocationError(null);
+
+    if (!navigator.geolocation) {
+      setLocationError("Location is not available in this browser.");
+      return;
+    }
+
+    setIsLocating(true);
+
+    try {
+      const position = await getCurrentPosition();
+      const params = new URLSearchParams({
+        lat: String(position.coords.latitude),
+        lon: String(position.coords.longitude)
+      });
+      const response = await fetch(`/api/location-zip?${params}`);
+      const data = (await response.json()) as { zip?: string; error?: string };
+
+      if (!response.ok || !data.zip) {
+        throw new Error(data.error ?? "Could not find a ZIP code for your current location.");
+      }
+
+      setZipDraft(null);
+      saveZip(data.zip);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Could not find a ZIP code for your location.";
+      setLocationError(message);
+    } finally {
+      setIsLocating(false);
+    }
+  }
+
+  function saveZip(zip: string) {
+    setSubmittedZip(zip);
+    window.localStorage.setItem(storedZipKey, zip);
     window.dispatchEvent(new Event(storedZipChangeEvent));
   }
 
@@ -77,8 +132,10 @@ export default function Home() {
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8">
         <PageHeader
           zipInput={zipInput}
-          validationError={zipValidationError ?? zipLookupError}
+          validationError={validationError}
+          isLocating={isLocating}
           onZipInputChange={handleZipInputChange}
+          onUseCurrentLocation={handleUseCurrentLocation}
           onSubmit={handleSubmit}
         />
 
@@ -93,13 +150,13 @@ export default function Home() {
 
         <div className="grid gap-8 lg:grid-cols-3">
           <DiscoverySection title="Nearby Events" eyebrow="Today and soon">
-            <ShowMoreItemGrid key={`events-${activeZip}`} items={area.events} itemName="events" />
+            <ShowMoreItemGrid key={`events-${activeZip}`} items={rankedEvents} itemName="events" />
           </DiscoverySection>
 
           <DiscoverySection title="Restaurants & Fast Food" eyebrow="Within 10 miles">
             <ShowMoreItemGrid
               key={`restaurants-${activeZip}`}
-              items={area.restaurants}
+              items={rankedRestaurants}
               itemName="restaurants"
             />
           </DiscoverySection>
@@ -111,4 +168,14 @@ export default function Home() {
       </div>
     </main>
   );
+}
+
+function getCurrentPosition() {
+  return new Promise<GeolocationPosition>((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: false,
+      maximumAge: 10 * 60 * 1000,
+      timeout: 10000
+    });
+  });
 }
