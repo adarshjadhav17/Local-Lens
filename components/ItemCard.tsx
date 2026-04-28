@@ -13,6 +13,16 @@ export function ItemCard({ item }: { item: LocalItem }) {
         </span>
       </div>
       <p className="mt-3 text-sm leading-6 text-ink/70">{item.description}</p>
+      {item.url ? (
+        <a
+          className="mt-3 inline-flex text-sm font-bold text-tide transition hover:text-ink focus:outline-none focus:ring-2 focus:ring-tide focus:ring-offset-2"
+          href={item.url}
+          rel="noreferrer"
+          target="_blank"
+        >
+          View details
+        </a>
+      ) : null}
     </article>
   );
 }

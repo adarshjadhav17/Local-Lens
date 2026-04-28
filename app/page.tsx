@@ -93,11 +93,15 @@ export default function Home() {
 
         <div className="grid gap-8 lg:grid-cols-3">
           <DiscoverySection title="Nearby Events" eyebrow="Today and soon">
-            <ItemGrid items={area.events} />
+            <ShowMoreItemGrid key={`events-${activeZip}`} items={area.events} itemName="events" />
           </DiscoverySection>
 
           <DiscoverySection title="Restaurants & Fast Food" eyebrow="Within 10 miles">
-            <ShowMoreItemGrid key={activeZip} items={area.restaurants} />
+            <ShowMoreItemGrid
+              key={`restaurants-${activeZip}`}
+              items={area.restaurants}
+              itemName="restaurants"
+            />
           </DiscoverySection>
 
           <DiscoverySection title="Local Deals" eyebrow="Nearby offers">

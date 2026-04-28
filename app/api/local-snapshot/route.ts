@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getNearbyEvents } from "@/lib/events";
 import { getAreaSnapshot, hasMockArea, incorrectZipMessage, normalizeZip } from "@/lib/local-area";
 import { getNearbyRestaurants } from "@/lib/places";
 import { getTrafficSnapshot } from "@/lib/traffic";
@@ -30,10 +31,11 @@ export async function GET(request: Request) {
     const area = getAreaSnapshot(zip);
     const isMockFallback = !hasMockArea(zip);
     const location = await getZipLocation(zip);
-    const [weather, traffic, restaurants] = await Promise.all([
+    const [weather, traffic, restaurants, events] = await Promise.all([
       getCurrentWeather(location),
       getTrafficSnapshot(location),
-      getNearbyRestaurants(location)
+      getNearbyRestaurants(location),
+      getNearbyEvents(location)
     ]);
     const resolvedArea = getResolvedArea(area, location, isMockFallback);
 
@@ -41,6 +43,7 @@ export async function GET(request: Request) {
       snapshot: {
         area: {
           ...resolvedArea,
+          events: events ?? resolvedArea.events,
           restaurants: restaurants ?? resolvedArea.restaurants
         },
         weather,

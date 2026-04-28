@@ -15,6 +15,7 @@ export type LocalItem = {
   meta: string;
   description: string;
   tag: string;
+  url?: string;
 };
 
 export type AreaSnapshot = {

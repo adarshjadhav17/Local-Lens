@@ -7,7 +7,7 @@ import type { LocalItem } from "@/types/local-area";
 const INITIAL_VISIBLE_ITEMS = 4;
 const VISIBLE_ITEMS_INCREMENT = 4;
 
-export function ShowMoreItemGrid({ items }: { items: LocalItem[] }) {
+export function ShowMoreItemGrid({ items, itemName }: { items: LocalItem[]; itemName: string }) {
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_ITEMS);
   const visibleItems = items.slice(0, visibleCount);
   const hiddenCount = Math.max(items.length - visibleCount, 0);
@@ -22,7 +22,7 @@ export function ShowMoreItemGrid({ items }: { items: LocalItem[] }) {
           className="w-full rounded-lg border border-tide/30 bg-white px-4 py-3 text-sm font-bold text-tide shadow-sm transition hover:border-tide hover:bg-tide/5 focus:outline-none focus:ring-2 focus:ring-tide focus:ring-offset-2"
           onClick={() => setVisibleCount((current) => current + VISIBLE_ITEMS_INCREMENT)}
         >
-          Show more restaurants ({hiddenCount} more)
+          Show more {itemName} ({hiddenCount} more)
         </button>
       ) : null}
     </div>
