@@ -43,6 +43,7 @@ type TicketmasterResponse = {
 const EVENT_RADIUS_MILES = 25;
 const EVENT_LOOKAHEAD_DAYS = 30;
 const MAX_EVENT_RESULTS = 20;
+const TICKETMASTER_FETCH_SIZE = 40;
 
 export async function getNearbyEvents(location: ZipLocation): Promise<LocalItem[] | null> {
   const apiKey = process.env.TICKETMASTER_API_KEY;
@@ -61,7 +62,7 @@ export async function getNearbyEvents(location: ZipLocation): Promise<LocalItem[
     latlong: `${location.latitude},${location.longitude}`,
     radius: String(EVENT_RADIUS_MILES),
     unit: "miles",
-    size: String(MAX_EVENT_RESULTS),
+    size: String(TICKETMASTER_FETCH_SIZE),
     sort: "date,asc",
     startDateTime: now.toISOString().replace(/\.\d{3}Z$/, "Z"),
     endDateTime: endDate.toISOString().replace(/\.\d{3}Z$/, "Z")
@@ -91,7 +92,7 @@ export async function getNearbyEvents(location: ZipLocation): Promise<LocalItem[
     return null;
   }
 
-  return activeEvents.map(toLocalItem);
+  return activeEvents.slice(0, MAX_EVENT_RESULTS).map(toLocalItem);
 }
 
 function toLocalItem(event: TicketmasterEvent): LocalItem {
