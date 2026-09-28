@@ -4,6 +4,9 @@ out
 build
 .vercel
 *.log
-.env
-.env*.local
+.env*
+!.env.example
 .DS_Store
+next-env.d.ts
+*.tsbuildinfo
+coverage/
